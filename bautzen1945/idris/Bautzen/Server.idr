@@ -22,22 +22,30 @@ handleClient : Socket -> SocketAddress -> Game -> IO ()
 handleClient socket addr game = do
   putStrLn $ "waiting for input"
   Right (str, _) <- recv socket 6 -- receive 6 characters representing the length of message to read
-    | Left err => do putStrLn ("failed to receive length of message " ++ show err) ; close socket -- TODO error handling
+    | Left err => do
+        putStrLn ("failed to receive length of message " ++ show err)
+        close socket -- TODO: Error handling.
   putStrLn ("received  " ++ str)
   case parseInteger (unpack str) 0 of
-    Nothing => do putStrLn ("fail to parse '" ++ str ++ "' to expected number of characters, ignoring") ; handleClient socket addr game
+    Nothing => do
+      putStrLn ("fail to parse '" ++ str ++ "' to expected number of characters, ignoring")
+      close socket -- TODO: Error handling.
     Just len => do Right (msg, _) <- recv socket (fromInteger len)
-                     | Left err => do putStrLn ("failed to read message " ++ show err) ; handleClient socket addr game
+                     | Left err => do
+                         putStrLn ("failed to read message " ++ show err)
+                         --handleClient socket addr game
+                         close socket -- TODO: Error handling.
                    putStrLn $ "received  " ++ msg
                    let (res, game') = commandHandler game msg
                    putStrLn $ "result is " ++ show res
                    let lens = padWith0 (cast $ length res)
                    putStrLn $ "sending " ++ lens ++ " chars"
                    Right l <- send socket (lens ++ res)
-                     | Left err => do putStrLn ("failed to send message " ++ show err) ; close socket -- TODO error handling
+                     | Left err => do
+                         putStrLn ("failed to send message " ++ show err)
+                         close socket -- TODO: Error handling.
                    putStrLn $ "sent result"
                    handleClient socket addr game'
-
 
 serve : Socket -> IO (Either String ())
 serve sock = do
@@ -45,9 +53,8 @@ serve sock = do
   Right (s, addr) <- accept sock
     | Left err => pure (Left $ "Failed to accept on socket with error: " ++ show err)
   putStrLn $ "client connecting " ++ show addr
-  pid <- do
-    putStrLn "before fork"
-    fork (handleClient s addr initialGame)
+  putStrLn $ "before fork s = " ++ show (protocolNumber s, descriptor s)
+  pid <- fork (handleClient s addr initialGame)
   putStrLn "after fork"
   serve sock
 

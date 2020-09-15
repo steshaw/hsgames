@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ $# -ne 2 ]]; then
+  echo "usage: $0 sleep-secs iterations"
+  exit 2
+fi
+
+sleep=$1
+num=$2
+
+for _ in $(seq 1 "${num}"); do
+  echo -n '.'
+  # NOTE: The bug does not require simulaneous requests. So `&` not needed.
+  ./echo1 "${sleep}" #&
+done
+echo
+
+wait
+echo

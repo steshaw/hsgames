@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+sleep=$1
+
+./build/exec/echo client "${sleep}"
+echo -n 'x'
